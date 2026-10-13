@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旋律編曲家 - I'd like to teach the world to sing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@300;400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans HK', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* 鋼琴鍵盤樣式 */
+        .keyboard {
+            display: flex;
+            height: 60px;
+            margin: 10px 0;
+            user-select: none;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+
+        .key {
+            flex: 1;
+            min-width: 20px;
+            border-right: 1px solid #ccc;
+            background: white;
+            position: relative;
+            cursor: pointer;
+            border-bottom-left-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .key.black {
+            background: #333;
+            height: 60%;
+            width: 14px;
+            margin-left: -7px;
+            margin-right: -7px;
+            z-index: 1;
+            border-radius: 0 0 3px 3px;
+        }
+
+        .key.active {
+            background-color: #93c5fd !important;
+        }
+        .key.black.active {
+            background-color: #3b82f6 !important;
+        }
+
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto glass-panel p-6 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">旋律編曲家</h1>
+            <p class="text-gray-600">歌曲: <span class="font-semibold italic">I'd like to teach the world to sing</span></p>
+            <p class="text-sm mt-2 text-gray-500">原曲定調：C 大調</p>
+        </header>
+
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-8 rounded-r">
+            <h2 class="font-bold text-blue-800 mb-2">任務說明：</h2>
+            <ol class="list-decimal list-inside text-blue-900 space-y-1">
+                <li>這首樂曲將會由原本的旋律重複 3 次組成。</li>
+                <li>請為每一次的重複選擇不同的調性。</li>
+                <li>你可以選擇「關係大小調」或「同主音大小調」。</li>
+                <li>完成設定後，點擊「播放完整樂曲」聆聽你的設計！</li>
+            </ol>
+        </div>
+
+        <div class="space-y-6" id="sections-container">
+            <!-- Section 1 -->
+            <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm section-card" data-section="1">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">第一段 (Section 1)</h3>
+                    <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm font-medium">起始設定</span>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">選擇調性 (Key)</label>
+                        <select class="key-select w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" onchange="updateSubsequentOptions(1)">
+                            <!-- Options generated dynamically to include all keys -->
+                        </select>
+                    </div>
+                    <div class="flex justify-end mt-4 md:mt-0 pt-5">
+                        <button class="btn px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-md font-medium flex items-center gap-2" onclick="playSection(1)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                            試聽此段
+                        </button>
+                    </div>
+                </div>
+                <div class="keyboard-container mt-4" id="keyboard-1"></div>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm section-card" data-section="2">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">第二段 (Section 2)</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">根據第一段，你可以選擇：</label>
+                        <select class="key-select w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border" onchange="updateSubsequentOptions(2)">
+                            <!-- Options generated dynamically -->
+                        </select>
+                    </div>
+                    <div class="flex justify-end mt-4 md:mt-0 pt-5">
+                        <button class="btn px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-md font-medium flex items-center gap-2" onclick="playSection(2)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                            試聽此段
+                        </button>
+                    </div>
+                </div>
+                <div class="keyboard-container mt-4" id="keyboard-2"></div>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm section-card" data-section="3">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800">第三段 (Section 3)</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">根據第二段，你可以選擇：</label>
+                        <select class="key-select w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 p-2 border">
+                            <!-- Options generated dynamically -->
+                        </select>
+                    </div>
+                    <div class="flex justify-end mt-4 md:mt-0 pt-5">
+                        <button class="btn px-4 py-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-md font-medium flex items-center gap-2" onclick="playSection(3)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                            </svg>
+                            試聽此段
+                        </button>
+                    </div>
+                </div>
+                <div class="keyboard-container mt-4" id="keyboard-3"></div>
+            </div>
+        </div>
+
+        <div class="mt-10 pt-6 border-t border-gray-200 text-center">
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button id="playAllBtn" class="btn px-8 py-4 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold text-lg shadow-lg flex items-center justify-center gap-2" onclick="playFullArrangement()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    播放完整樂曲
+                </button>
+                <button id="stopBtn" class="btn px-8 py-4 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold text-lg shadow-lg flex items-center justify-center gap-2 hidden" onclick="stopPlayback()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                    </svg>
+                    停止播放
+                </button>
+            </div>
+            <div id="statusText" class="mt-4 text-gray-600 font-medium h-6"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- Musical Data ---
+        
+        // Base melody in C Major relative to root note (0 = Root, 2 = Major 2nd, 4 = Major 3rd, etc.)
+        // From the provided PDF "I'd like to teach the world to sing"
+        // Notes format: { noteIndex: scaleDegree, duration: '4n' (quarter), '8n' (eighth), '2n' (half) }
+        // Scale degrees for C Major: 0=C, 2=D, 4=E, 5=F, 7=G, 9=A, 11=B, 12=C(high)
+        const baseMelody = [
+            // Bar 1 & 2 (Pick up note + first full bar)
+            { noteIndex: 9, duration: '8n' },  // A (La) - Pickup
+            { noteIndex: 7, duration: '4n' },  // G (Sol)
+            { noteIndex: 9, duration: '8n' },  // A (La)
+            { noteIndex: 12, duration: '4n' }, // C' (high Do)
+            { noteIndex: 9, duration: '4n' },  // A (La)
+
+            // Bar 3
+            { noteIndex: 7, duration: '4n' },  // G (Sol)
+            { noteIndex: 9, duration: '8n' },  // A (La)
+            { noteIndex: 12, duration: '4n' }, // C' (high Do)
+            { noteIndex: 9, duration: '4n' },  // A (La)
+            
+            // Bar 4 & 5
+            { noteIndex: 12, duration: '4n' }, // C' (high Do)
+            { noteIndex: 14, duration: '4n' }, // D' (high Re)
+            { noteIndex: 12, duration: '8n' }, // C' (high Do)
+            { noteIndex: 9, duration: '8n' },  // A (La)
+            { noteIndex: 7, duration: '2n.' }, // G (Sol) - Dotted half note
+
+            // Bar 5 (Pickup to next phrase) & Bar 6
+            { noteIndex: 4, duration: '8n' },  // E (Mi) - Pickup
+            { noteIndex: 2, duration: '4n' },  // D (Re)
+            { noteIndex: 4, duration: '8n' },  // E (Mi)
+            { noteIndex: 7, duration: '4n' },  // G (Sol)
+            { noteIndex: 4, duration: '4n' },  // E (Mi)
+
+            // Bar 7
+            { noteIndex: 2, duration: '4n' },  // D (Re)
+            { noteIndex: 4, duration: '8n' },  // E (Mi)
+            { noteIndex: 7, duration: '4n' },  // G (Sol)
+            { noteIndex: 4, duration: '4n' },  // E (Mi)
+
+            // Bar 8 & 9
+        { noteIndex: 7, duration: '4n' },  // G (Sol)
+        { noteIndex: 9, duration: '4n' },  // A (La)
+        { noteIndex: 7, duration: '8n' },  // G (Sol)
+        { noteIndex: 2, duration: '8n' },  // D (Re)
+        { noteIndex: 0, duration: '2n.' }  // C (Do) - Dotted half note
+    ];
+
+    // Note index mapping for dynamic relation calculations
+    const noteToIndex = {'C': 0, 'Db': 1, 'D': 2, 'Eb': 3, 'E': 4, 'F': 5, 'Gb': 6, 'G': 7, 'Ab': 8, 'A': 9, 'Bb': 10, 'B': 11};
+    const indexToNote = {0: 'C', 1: 'Db', 2: 'D', 3: 'Eb', 4: 'E', 5: 'F', 6: 'Gb', 7: 'G', 8: 'Ab', 9: 'A', 10: 'Bb', 11: 'B'};
+
+    // Complete 24 Keys definitions
+    const keys = {
+        'C_Major': { name: 'C 大調', root: 'C4', scale: 'major' },
+        'C_Minor': { name: 'C 小調', root: 'C4', scale: 'minor' },
+        'Db_Major': { name: 'Db 大調', root: 'Db4', scale: 'major' },
+        'Db_Minor': { name: 'C# 小調', root: 'Db4', scale: 'minor' },
+        'D_Major': { name: 'D 大調', root: 'D4', scale: 'major' },
+        'D_Minor': { name: 'D 小調', root: 'D4', scale: 'minor' },
+        'Eb_Major': { name: 'Eb 大調', root: 'Eb4', scale: 'major' },
+        'Eb_Minor': { name: 'Eb 小調', root: 'Eb4', scale: 'minor' },
+        'E_Major': { name: 'E 大調', root: 'E4', scale: 'major' },
+        'E_Minor': { name: 'E 小調', root: 'E4', scale: 'minor' },
+        'F_Major': { name: 'F 大調', root: 'F4', scale: 'major' },
+        'F_Minor': { name: 'F 小調', root: 'F4', scale: 'minor' },
+        'Gb_Major': { name: 'F#/Gb 大調', root: 'Gb4', scale: 'major' },
+        'Gb_Minor': { name: 'F# 小調', root: 'Gb4', scale: 'minor' }, 
+        'G_Major': { name: 'G 大調', root: 'G3', scale: 'major' },
+        'G_Minor': { name: 'G 小調', root: 'G3', scale: 'minor' },
+        'Ab_Major': { name: 'Ab 大調', root: 'Ab3', scale: 'major' },
+        'Ab_Minor': { name: 'G# 小調', root: 'Ab3', scale: 'minor' },
+        'A_Major': { name: 'A 大調', root: 'A3', scale: 'major' },
+        'A_Minor': { name: 'A 小調', root: 'A3', scale: 'minor' },
+        'Bb_Major': { name: 'Bb 大調', root: 'Bb3', scale: 'major' },
+        'Bb_Minor': { name: 'Bb 小調', root: 'Bb3', scale: 'minor' },
+        'B_Major': { name: 'B 大調', root: 'B3', scale: 'major' },
+        'B_Minor': { name: 'B 小調', root: 'B3', scale: 'minor' }
+    };
+
+    // Scale offsets (semitones from root)
+    const scaleOffsets = {
+        'major': [0, 2, 4, 5, 7, 9, 11, 12, 14, 16, 17, 19, 21, 23],
+        'minor': [0, 2, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 20, 22] // Natural minor
+    };
+
+    // Dynamically calculate key relations based on music theory
+    function getRelations(keyId) {
+        const parts = keyId.split('_');
+        const rootNote = parts[0]; 
+        const scale = parts[1];
+        const rootIdx = noteToIndex[rootNote];
+
+        let relations = [];
+
+        // 1. Same Key
+        relations.push({ id: keyId, desc: '保持原調' });
+
+        // 2. Relative Major/Minor (關係大小調)
+        let relativeIdx = scale === 'Major' ? (rootIdx - 3 + 12) % 12 : (rootIdx + 3) % 12;
+        let relativeScale = scale === 'Major' ? 'Minor' : 'Major';
+        const relativeId = ${indexToNote[relativeIdx]}_${relativeScale};
+        relations.push({ id: relativeId, desc: 關係${relativeScale === 'Major' ? '大' : '小'}調 (Relative) });
+
+        // 3. Parallel Major/Minor (同主音大小調)
+        const parallelScale = scale === 'Major' ? 'Minor' : 'Major';
+        const parallelId = ${rootNote}_${parallelScale};
+        relations.push({ id: parallelId, desc: 同主音${parallelScale === 'Major' ? '大' : '小'}調 (Parallel) });
+
+        // 4. Dominant (屬調 - Perfect 5th up)
+        const domIdx = (rootIdx + 7) % 12;
+        relations.push({ id: ${indexToNote[domIdx]}_${scale}, desc: '屬調 (Dominant)' });
+
+        // 5. Subdominant (下屬調 - Perfect 4th up)
+        const subIdx = (rootIdx + 5) % 12;
+        relations.push({ id: ${indexToNote[subIdx]}_${scale}, desc: '下屬調 (Subdominant)' });
+
+        return relations;
+    }
+
+    // --- Tone.js Setup ---
+        
+        let synth;
+        let isPlaying = false;
+        let currentTransportPart = null;
+        const activeKeys = new Set();
+
+        // Initialize audio context only on user interaction
+        async function initAudio() {
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            if (!synth) {
+                // Use a nice sounding synth
+                synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'triangle' },
+                    envelope: { attack: 0.05, decay: 0.1, sustain: 0.3, release: 1 }
+                }).toDestination();
+                
+                // Add a little reverb
+                const reverb = new Tone.Reverb({ decay: 2, wet: 0.3 }).toDestination();
+                synth.connect(reverb);
+                
+                Tone.Transport.bpm.value = 80; // Changed to match PDF
+            }
+        }
+
+        // --- STREAMING_CHUNK:Implementing Music Logic... ---
+        
+        // Helper to convert C major base note index to specific key notes
+        function getNotesForKey(keyId) {
+            const keyInfo = keys[keyId];
+            const rootFreq = Tone.Frequency(keyInfo.root);
+            const scaleType = keyInfo.scale;
+            const offsets = scaleOffsets[scaleType];
+            
+            return baseMelody.map(noteData => {
+                // Map the original C major index (0=C, 2=D, 4=E...) to scale degree
+                // C major degrees: C(0)->0, D(2)->1, E(4)->2, F(5)->3, G(7)->4, A(9)->5, B(11)->6, C'(12)->7, D'(14)->8
+                let degree = 0;
+                switch(noteData.noteIndex) {
+                    case 0: degree = 0; break; // Do
+                    case 2: degree = 1; break; // Re
+                    case 4: degree = 2; break; // Mi
+                    case 5: degree = 3; break; // Fa
+                    case 7: degree = 4; break; // Sol
+                    case 9: degree = 5; break; // La
+                    case 11: degree = 6; break;// Ti
+                    case 12: degree = 7; break;// High Do
+                    case 14: degree = 8; break;// High Re
+                    default: degree = 0;
+                }
+
+                // Apply offset based on chosen scale (major/minor)
+                // If degree goes above one octave, calculate it properly using modulo for offsets
+                const normalizedDegree = degree % 7;
+                const octaveShift = Math.floor(degree / 7) * 12;
+                const semitonesFromRoot = offsets[normalizedDegree] + octaveShift;
+
+                // Transpose to correct octave if note index goes high
+                let finalNote = rootFreq.transpose(semitonesFromRoot).toNote();
+                
+                return {
+            note: finalNote,
+            duration: noteData.duration
+        };
+    });
+}
+
+// --- STREAMING_CHUNK:Implementing UI Updates and Playback... ---
+
+function populateFirstSection() {
+    const select1 = document.querySelectorAll('.key-select')[0];
+    select1.innerHTML = '';
+    
+    const optGroupMajor = document.createElement('optgroup');
+    optGroupMajor.label = "大調 (Major Keys)";
+    
+    const optGroupMinor = document.createElement('optgroup');
+    optGroupMinor.label = "小調 (Minor Keys)";
+    
+    for(const [keyId, keyData] of Object.entries(keys)) {
+        const option = document.createElement('option');
+        option.value = keyId;
+        option.textContent = keyData.name;
+        
+        if (keyData.scale === 'major') {
+            optGroupMajor.appendChild(option);
+        } else {
+            optGroupMinor.appendChild(option);
+        }
+    }
+    
+    select1.appendChild(optGroupMajor);
+    select1.appendChild(optGroupMinor);
+    
+    // Default to C Major
+    select1.value = 'C_Major';
+}
+
+function updateSubsequentOptions(changedSectionNum) {
+    const selects = document.querySelectorAll('.key-select');
+    
+    for (let i = changedSectionNum; i < 3; i++) {
+        const prevSelect = selects[i - 1];
+        const currentSelect = selects[i];
+        
+        // Save current selection to restore if possible
+        const prevVal = currentSelect.value;
+        const selectedKeyId = prevSelect.value;
+        
+        // Clear current options
+        currentSelect.innerHTML = '';
+        
+        // Get dynamically calculated relations
+        let relations = getRelations(selectedKeyId);
+        
+        relations.forEach(rel => {
+            if (keys[rel.id]) {
+                const option = document.createElement('option');
+                option.value = rel.id;
+                option.textContent = ${keys[rel.id].name} - ${rel.desc};
+                currentSelect.appendChild(option);
+            }
+        });
+
+        // Try to keep previously selected value if it's still a valid option
+        if(prevVal && Array.from(currentSelect.options).some(opt => opt.value === prevVal)) {
+            currentSelect.value = prevVal;
+        }
+    }
+}
+
+async function playSequence(melodyNotes, sectionIndex = null) {
+            await initAudio();
+            
+            if (isPlaying) {
+                stopPlayback();
+                // small delay to ensure clean stop
+                await new Promise(r => setTimeout(r, 100)); 
+            }
+            
+            isPlaying = true;
+            updateUIPlayState(true);
+
+            let now = Tone.now();
+            let timeAccumulator = now;
+            
+            // Highlight section card
+            if (sectionIndex !== null) {
+                document.querySelectorAll('.section-card').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+                document.querySelector([data-section="${sectionIndex}"]).classList.add('border-blue-500', 'bg-blue-50');
+            }
+
+            // Create a Tone.Part for better scheduling and event clearing
+            const events = melodyNotes.map((n, i) => {
+                // Calculate time offset based on previous durations
+                // Note: simplified time calculation, Tone.Part handles relative time better usually
+                // but for visual sync we need absolute time relative to start
+                return n; 
+            });
+
+            // Calculate exact timing for visual feedback
+            let timeOffset = 0;
+            melodyNotes.forEach((n, idx) => {
+                const durInSeconds = Tone.Time(n.duration).toSeconds();
+                
+                // Schedule audio
+                synth.triggerAttackRelease(n.note, n.duration, timeAccumulator);
+                
+                // Schedule visual (using setTimeout as it's easier for DOM, though slightly less precise than Tone.Draw)
+                const noteTime = timeAccumulator - now;
+                setTimeout(() => {
+                    if(!isPlaying) return;
+                    highlightKeyboard(n.note, sectionIndex);
+                    document.getElementById('statusText').textContent = 播放中: ${n.note};
+                }, noteTime * 1000);
+                
+                timeAccumulator += durInSeconds;
+            });
+
+            // Schedule end
+            const totalDuration = timeAccumulator - now;
+            setTimeout(() => {
+                if(isPlaying) { // check if wasn't stopped manually
+                    stopPlayback();
+                    if(sectionIndex !== null) {
+                        document.querySelector([data-section="${sectionIndex}"]).classList.remove('border-blue-500', 'bg-blue-50');
+                    }
+                }
+            }, totalDuration * 1000 + 500); // add slight pad
+        }
+
+        async function playSection(sectionNum) {
+            const selects = document.querySelectorAll('.key-select');
+            const selectedKey = selects[sectionNum - 1].value;
+            const notes = getNotesForKey(selectedKey);
+            
+            document.getElementById('statusText').textContent = 準備播放第 ${sectionNum} 段...;
+            await playSequence(notes, sectionNum);
+        }
+
+        async function playFullArrangement() {
+            await initAudio();
+            const selects = document.querySelectorAll('.key-select');
+            
+            let allNotes = [];
+            
+            // Gather all notes
+            for(let i=0; i<3; i++) {
+                const notes = getNotesForKey(selects[i].value);
+                // Add a small rest between sections
+                notes.push({ note: null, duration: '4n' }); 
+                allNotes = allNotes.concat(notes);
+            }
+
+            document.getElementById('statusText').textContent = 準備播放完整樂曲...;
+            
+            // Custom play loop for full arrangement to highlight correct section
+            if (isPlaying) {
+                stopPlayback();
+                await new Promise(r => setTimeout(r, 100));
+            }
+            
+            isPlaying = true;
+            updateUIPlayState(true);
+            
+            let now = Tone.now();
+            let timeAccumulator = now;
+            
+            // Reset highlighting
+            document.querySelectorAll('.section-card').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+
+            let currentSectionIndex = 1;
+            
+            allNotes.forEach((n, idx) => {
+                const durInSeconds = Tone.Time(n.duration).toSeconds();
+                
+                if (n.note) {
+                    synth.triggerAttackRelease(n.note, n.duration, timeAccumulator);
+                    
+                    const noteTime = timeAccumulator - now;
+                    setTimeout(() => {
+                        if(!isPlaying) return;
+                        
+                        // Highlight correct section card based on progression
+                        const partLength = (allNotes.length / 3);
+                        const expectedSection = Math.floor(idx / partLength) + 1;
+                        
+                        if (currentSectionIndex !== expectedSection && expectedSection <= 3) {
+                            document.querySelectorAll('.section-card').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+                            document.querySelector([data-section="${expectedSection}"]).classList.add('border-blue-500', 'bg-blue-50');
+                            currentSectionIndex = expectedSection;
+                        }
+
+                        highlightKeyboard(n.note, currentSectionIndex);
+                        document.getElementById('statusText').textContent = 播放中: ${n.note} (第 ${currentSectionIndex} 段);
+                    }, noteTime * 1000);
+                }
+                
+                timeAccumulator += durInSeconds;
+            });
+
+            // Schedule end
+            const totalDuration = timeAccumulator - now;
+            setTimeout(() => {
+                if(isPlaying) {
+                    stopPlayback();
+                    document.querySelectorAll('.section-card').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+                }
+            }, totalDuration * 1000 + 500);
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            updateUIPlayState(false);
+            document.getElementById('statusText').textContent = '';
+            // Clear all active keys
+            document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+            // Remove section highlights
+            document.querySelectorAll('.section-card').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-50'));
+            
+            // Cancel all scheduled events on Transport and Transport itself
+            if(synth) {
+                synth.releaseAll();
+            }
+            Tone.Transport.stop();
+            Tone.Transport.cancel(0);
+        }
+
+        function updateUIPlayState(playing) {
+            const playBtn = document.getElementById('playAllBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const selects = document.querySelectorAll('.key-select');
+            const sectionBtns = document.querySelectorAll('.section-card button');
+
+            if (playing) {
+                playBtn.classList.add('hidden');
+                stopBtn.classList.remove('hidden');
+                selects.forEach(s => s.disabled = true);
+                sectionBtns.forEach(b => b.disabled = true);
+                sectionBtns.forEach(b => b.classList.add('opacity-50', 'cursor-not-allowed'));
+            } else {
+                playBtn.classList.remove('hidden');
+                stopBtn.classList.add('hidden');
+                selects.forEach(s => s.disabled = false);
+                sectionBtns.forEach(b => b.disabled = false);
+                sectionBtns.forEach(b => b.classList.remove('opacity-50', 'cursor-not-allowed'));
+            }
+        }
+
+        // --- STREAMING_CHUNK:Implementing Visual Piano Keyboard... ---
+        
+        function renderKeyboards() {
+            const octaves = [3, 4, 5]; // Render octaves 3 to 5
+            const notes = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+            
+            for(let section = 1; section <= 3; section++) {
+                const container = document.getElementById(keyboard-${section});
+                const keyboardDiv = document.createElement('div');
+                keyboardDiv.className = 'keyboard';
+                
+                octaves.forEach(octave => {
+                    notes.forEach((note) => {
+                        const isBlack = note.includes('b');
+                        const key = document.createElement('div');
+                        key.className = key ${isBlack ? 'black' : 'white'};
+                        key.dataset.note = ${note}${octave};
+                        key.dataset.section = section;
+                        keyboardDiv.appendChild(key);
+                    });
+                });
+                container.appendChild(keyboardDiv);
+            }
+        }
+
+        function highlightKeyboard(noteName, section) {
+            // Clear previous active keys in all sections
+            document.querySelectorAll('.key.active').forEach(k => k.classList.remove('active'));
+            
+            if(!noteName || section === null) return;
+            
+            // Simplify note name for matching (e.g. C#4 to Db4 if necessary, though Tone returns flats usually)
+            // Tone.js usually outputs sharps for MIDI to Note, let's normalize to flats as we drew them
+            let normalizedNote = noteName.replace('#', 'b'); 
+            if(noteName.includes('#')) {
+               const letter = noteName.charAt(0);
+               const octave = noteName.slice(-1);
+               const codes = {'C': 'Db', 'D': 'Eb', 'F': 'Gb', 'G': 'Ab', 'A': 'Bb'};
+               normalizedNote = codes[letter] + octave;
+            }
+
+            const keyEl = document.querySelector(.key[data-note="${normalizedNote}"][data-section="${section}"]);
+        if (keyEl) {
+            keyEl.classList.add('active');
+        }
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+        populateFirstSection();
+        updateSubsequentOptions(1); // Init section 2
+        updateSubsequentOptions(2); // Init section 3
+        renderKeyboards();
+    });
+
+</script>
+</body>
+</html>
